@@ -1,684 +1,427 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8" />
-
   <title>Daily Bus Arrival Order</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <style>
-
     :root {
-
       --primary: #ff6f00;
-
       --primary-dark: #e65f00;
-
       --bg: #f8f8f8;
-
       --card-bg: #ffffff;
-
       --text: #222222;
-
       --muted: #777777;
-
       --danger: #c62828;
-
       --border-radius: 8px;
-
     }
-
- 
 
     * { box-sizing: border-box; }
 
- 
-
     body {
-
       margin: 0;
-
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-
       background: var(--bg);
-
       color: var(--text);
-
+      overflow: hidden;
     }
-
- 
 
     header {
-
       background: var(--primary);
-
       color: #fff;
-
-      padding: 16px 24px;
-
+      padding: 24px 24px 32px;
       text-align: center;
-
+      position: relative;
+      overflow: hidden;
     }
-
- 
 
     header h1 {
-
       margin: 0;
-
-      font-size: 1.4rem;
-
+      font-size: 1.6rem;
+      position: relative;
+      z-index: 2;
     }
-
- 
 
     header p {
-
-      margin: 4px 0 0;
-
-      font-size: 0.9rem;
-
-      opacity: 0.9;
-
+      display: none;
     }
 
- 
+    .header-rain {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .header-raindrop {
+      position: absolute;
+      width: 2px;
+      height: 18px;
+      background: rgba(0, 0, 255, 0.35);
+      animation: header-fall linear;
+    }
+
+    @keyframes header-fall {
+      from {
+        transform: translateY(-20px);
+        opacity: 0.9;
+      }
+      to {
+        transform: translateY(80px);
+        opacity: 0.9;
+      }
+    }
 
     main {
-
       max-width: 900px;
-
       margin: 24px auto;
-
       padding: 0 16px 32px;
-
       display: grid;
-
       grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
-
       gap: 24px;
-
+      position: relative;
+      z-index: 1;
     }
-
- 
 
     @media (max-width: 768px) {
-
       main {
-
         grid-template-columns: 1fr;
-
       }
-
     }
-
- 
 
     .card {
-
       background: var(--card-bg);
-
       border-radius: var(--border-radius);
-
       box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-
       padding: 16px 18px 20px;
-
+      position: relative;
+      z-index: 2;
     }
-
- 
 
     .card h2 {
-
       margin: 0 0 4px;
-
       font-size: 1.1rem;
-
     }
-
- 
 
     .card-subtitle {
-
       margin: 0 0 12px;
-
       font-size: 0.85rem;
-
       color: var(--muted);
-
     }
-
- 
-
-    .badge {
-
-      display: inline-block;
-
-      padding: 2px 8px;
-
-      font-size: 0.7rem;
-
-      border-radius: 999px;
-
-      border: 1px solid var(--primary);
-
-      color: var(--primary);
-
-      background: #fff7ef;
-
-    }
-
- 
 
     .section-header {
-
       display: flex;
-
       align-items: center;
-
       justify-content: space-between;
-
       gap: 8px;
-
       margin-bottom: 10px;
-
     }
 
- 
+    .badge { display: none; }
 
     .bus-grid {
-
       display: grid;
-
       grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-
       gap: 8px;
-
       margin-top: 4px;
-
     }
-
- 
 
     .bus-btn {
-
       border-radius: 999px;
-
       border: 1px solid #dddddd;
-
       padding: 8px 10px;
-
       background: #ffffff;
-
       cursor: not-allowed;
-
       font-size: 0.85rem;
-
       display: flex;
-
       align-items: center;
-
       justify-content: space-between;
-
       color: var(--text);
-
       transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
-
     }
-
- 
 
     .bus-btn.guard-active {
-
       cursor: pointer;
-
       border-color: var(--primary);
-
     }
-
- 
 
     .bus-btn.guard-active:hover {
-
       background: #fff7ef;
-
       box-shadow: 0 0 0 1px #ffe0bf;
-
     }
 
- 
-
-    .bus-code {
-
-      font-weight: 600;
-
-    }
-
- 
+    .bus-code { font-weight: 600; }
 
     .bus-order-tag {
-
       font-size: 0.75rem;
-
       color: var(--muted);
-
       margin-left: 6px;
-
     }
-
- 
 
     .bus-order-tag span {
-
       font-weight: 600;
-
       color: var(--primary-dark);
-
     }
-
- 
 
     .muted {
-
       font-size: 0.8rem;
-
       color: var(--muted);
-
     }
-
- 
 
     .status-line {
-
       margin-top: 8px;
-
       font-size: 0.8rem;
-
       color: var(--muted);
-
     }
-
- 
 
     .status-line strong {
-
       color: var(--primary-dark);
-
     }
-
- 
 
     .divider {
-
       height: 1px;
-
       background: #eee;
-
       margin: 12px 0 10px;
-
     }
-
- 
 
     .btn {
-
       border-radius: 999px;
-
       border: none;
-
       padding: 7px 14px;
-
       font-size: 0.8rem;
-
       font-weight: 500;
-
       cursor: pointer;
-
       display: inline-flex;
-
       align-items: center;
-
       gap: 6px;
-
     }
-
- 
 
     .btn-primary {
-
       background: var(--primary);
-
       color: #ffffff;
-
     }
-
- 
 
     .btn-primary:hover {
-
       background: var(--primary-dark);
-
     }
-
- 
 
     .btn-outline {
-
       background: #ffffff;
-
       border: 1px solid #dddddd;
-
       color: var(--text);
-
     }
-
- 
 
     .btn-outline:hover {
-
       background: #f5f5f5;
-
     }
-
- 
 
     .btn-danger {
-
       background: var(--danger);
-
       color: #ffffff;
-
     }
-
- 
 
     .btn-danger:hover {
-
       background: #b71c1c;
-
     }
-
- 
 
     .btn:disabled {
-
       opacity: 0.4;
-
       cursor: not-allowed;
-
     }
-
- 
 
     input[type="password"] {
-
       width: 100%;
-
       padding: 7px 10px;
-
       font-size: 0.85rem;
-
       border-radius: 999px;
-
       border: 1px solid #dddddd;
-
       outline: none;
-
     }
-
- 
 
     input[type="password"]:focus {
-
       border-color: var(--primary);
-
       box-shadow: 0 0 0 1px #ffe0bf;
-
     }
-
- 
 
     .flex-row {
-
       display: flex;
-
       align-items: center;
-
       gap: 8px;
-
       margin-top: 8px;
-
       flex-wrap: wrap;
-
     }
-
- 
 
     .published-list {
-
       list-style: none;
-
       padding-left: 0;
-
       margin: 10px 0 0;
-
       font-size: 0.88rem;
-
     }
-
- 
 
     .published-list li {
-
       padding: 4px 0;
-
       display: flex;
-
       align-items: center;
-
       gap: 8px;
-
     }
-
- 
 
     .badge-index {
-
       display: inline-flex;
-
       align-items: center;
-
       justify-content: center;
-
       width: 20px;
-
       height: 20px;
-
       border-radius: 50%;
-
       background: #fff4e5;
-
       color: var(--primary-dark);
-
       font-size: 0.75rem;
-
       font-weight: 600;
-
       flex-shrink: 0;
-
     }
-
- 
 
     .timestamp {
-
       font-size: 0.75rem;
-
       color: var(--muted);
-
       margin-top: 6px;
-
+      text-align: center;
     }
-
- 
 
     .alert {
-
       font-size: 0.8rem;
-
       color: var(--danger);
-
       margin-top: 4px;
-
     }
 
+    .rain-container {
+      pointer-events: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      z-index: 999;
+    }
+
+    .raindrop {
+      position: absolute;
+      width: 2px;
+      height: 14px;
+      background: rgba(0, 0, 255, 0.4);
+      animation: fall linear;
+    }
+
+    @keyframes fall {
+      from {
+        transform: translateY(-20px);
+        opacity: 0.9;
+      }
+      to {
+        transform: translateY(100vh);
+        opacity: 0.9;
+      }
+    }
+
+    #publishedBody {
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #publicMessage {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin: 4px 0;
+    }
+
+    #publishedNote {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 8px;
+      text-align: center;
+      display: none;
+    }
   </style>
-
 </head>
-
 <body>
 
 <header>
-
   <h1>Daily Bus Arrival Order</h1>
-
-  <p>Guard records arrival sequence. Final order is visible to all with this file or link.</p>
-
+  <div class="header-rain" id="headerRain"></div>
 </header>
 
- 
-
 <main>
-
-  <!-- Guard control card -->
-
   <section class="card" id="guardCard">
-
     <div class="section-header">
-
       <div>
-
         <h2>Guard Mode</h2>
-
         <p class="card-subtitle">PIN-protected. Only the security guard can record arrivals.</p>
-
       </div>
-
-      <span class="badge">Guard only</span>
-
     </div>
-
- 
 
     <div id="guardLockedState">
-
       <p class="muted">Guard Mode is locked.</p>
-
       <div class="flex-row">
-
         <input type="password" id="pinInput" placeholder="Enter PIN" />
-
         <button class="btn btn-primary" id="unlockBtn">Unlock</button>
-
+        <button class="btn btn-outline" id="rainModeBtn" style="display:none;">Rain mode</button>
       </div>
-
       <div class="alert" id="pinError" style="display:none;">Incorrect PIN.</div>
-
     </div>
 
- 
-
     <div id="guardUnlockedState" style="display:none;">
-
       <p class="muted">Guard Mode is active. Tap buses in the order they arrive.</p>
-
- 
 
       <div class="bus-grid" id="busGrid"></div>
 
- 
-
       <div class="status-line" id="recordStatus">
-
         <strong>Recorded:</strong> 0 / 12 buses
-
       </div>
-
- 
 
       <div class="divider"></div>
 
- 
-
       <div class="flex-row">
-
         <button class="btn btn-primary" id="publishBtn" disabled>Publish order</button>
-
         <button class="btn btn-outline" id="clearBtn">Clear today</button>
-
         <button class="btn btn-danger" id="lockBtn">Lock Guard Mode</button>
-
+        <button class="btn btn-outline" id="rainModeGuardBtn" style="display:none;">Rain mode</button>
       </div>
-
- 
 
       <p class="muted" style="margin-top:6px;">
-
         Note: Published order syncs in real time via Firebase to all devices viewing this page.
-
       </p>
-
     </div>
-
   </section>
-
- 
-
-  <!-- Public view card -->
 
   <section class="card">
-
     <div class="section-header">
-
       <div>
-
         <h2>Published Order</h2>
-
-        <p class="card-subtitle">Read-only view for anyone using this file on this device.</p>
-
       </div>
-
-      <span class="badge">View only</span>
-
     </div>
 
- 
-
-    <p class="muted" id="publicMessage">
-
-      No order published yet today.
-
-    </p>
-
- 
+    <div id="publishedBody">
+      <p id="publicMessage">No order published yet today.</p>
+      <p id="publishedNote">
+        If your bus is not shown, it will be one of the buses arriving after the last bus indicated.
+      </p>
+    </div>
 
     <ol class="published-list" id="publishedList"></ol>
-
     <div class="timestamp" id="publishedTimestamp"></div>
-
   </section>
-
 </main>
 
- 
+<div class="rain-container" id="rainContainer"></div>
 
 <script type="module">
-
-  // ---- FIREBASE SETUP ----
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
   import {
     getFirestore,
@@ -698,504 +441,332 @@
     appId: "1:1059140298778:web:59e913d6922b8528c949a3"
   };
 
-  const firebaseApp = initializeApp(firebaseConfig);
-  const db = getFirestore(firebaseApp);
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
   const busDocRef = doc(db, "busData", "today");
-
-  // ---- CONFIGURATION ----
+  const rainDocRef = doc(db, "busData", "rain");
 
   const BUS_LIST = [
-
     "Chinese Garden MRT",
-
     "Bukit Batok MRT",
-
     "Bishan MRT",
-
     "Bedok MRT",
-
     "Woodlands MRT",
-
     "Boon Lay MRT",
-
     "Choa Chu Kang MRT",
-
     "Outram Park",
-
     "Sengkang MRT",
-
     "Yishun MRT",
-
     "Bukit Panjang MRT/LRT",
-
     "Bukit Indah (FTE only)"
-
   ];
 
   const MAX_BUSES = BUS_LIST.length;
-
- 
-
-  // DEMO PIN (unsafe for real production use; do NOT hardcode secrets in real apps)
-
-  const GUARD_PIN = "45213"; // <-- change this before real use
-
- 
-
-  // ---- STATE ----
+  const GUARD_PIN = "45213";
 
   let guardActive = false;
-
   let currentOrder = [];
-
- 
-
-  // ---- DOM ELEMENTS ----
+  let rainMode = false;
 
   const pinInput = document.getElementById("pinInput");
-
   const unlockBtn = document.getElementById("unlockBtn");
-
   const lockBtn = document.getElementById("lockBtn");
-
   const guardLockedState = document.getElementById("guardLockedState");
-
   const guardUnlockedState = document.getElementById("guardUnlockedState");
-
   const pinError = document.getElementById("pinError");
-
   const busGrid = document.getElementById("busGrid");
-
   const recordStatus = document.getElementById("recordStatus");
-
   const publishBtn = document.getElementById("publishBtn");
-
   const clearBtn = document.getElementById("clearBtn");
-
   const publishedList = document.getElementById("publishedList");
-
   const publicMessage = document.getElementById("publicMessage");
-
+  const publishedNote = document.getElementById("publishedNote");
   const publishedTimestamp = document.getElementById("publishedTimestamp");
 
- 
+  const rainModeBtn = document.getElementById("rainModeBtn");
+  const rainModeGuardBtn = document.getElementById("rainModeGuardBtn");
+  const rainContainer = document.getElementById("rainContainer");
+  const headerRain = document.getElementById("headerRain");
 
   function init() {
-
     renderBusButtons();
-
     subscribeToPublishedOrder();
-
-    connectEvents();
-
+    attachEvents();
   }
 
- 
-
-  function connectEvents() {
-
+  function attachEvents() {
     unlockBtn.addEventListener("click", tryUnlockGuardMode);
-
     lockBtn.addEventListener("click", lockGuardMode);
-
     publishBtn.addEventListener("click", publishOrder);
-
     clearBtn.addEventListener("click", clearToday);
 
- 
-
     pinInput.addEventListener("keyup", (e) => {
-
-      if (e.key === "Enter") {
-
-        tryUnlockGuardMode();
-
-      }
-
+      if (e.key === "Enter") tryUnlockGuardMode();
     });
 
-  }
+    rainModeBtn.addEventListener("click", () => {
+      if (guardActive) setRainMode(true);
+    });
 
- 
+    rainModeGuardBtn.addEventListener("click", () => {
+      if (guardActive) setRainMode(true);
+    });
+  }
 
   function renderBusButtons() {
-
     busGrid.innerHTML = "";
-
     BUS_LIST.forEach((label, index) => {
-
       const btn = document.createElement("button");
-
       btn.className = "bus-btn";
-
       btn.dataset.index = index.toString();
 
- 
-
       const codeSpan = document.createElement("span");
-
       codeSpan.className = "bus-code";
-
       codeSpan.textContent = label;
 
- 
-
       const orderTag = document.createElement("span");
-
       orderTag.className = "bus-order-tag";
-
       orderTag.textContent = "";
 
- 
-
       btn.appendChild(codeSpan);
-
       btn.appendChild(orderTag);
-
- 
-
       btn.addEventListener("click", () => handleBusClick(index));
-
- 
-
       busGrid.appendChild(btn);
-
     });
-
     updateBusButtonStates();
-
   }
-
- 
-
-  // ---- GUARD MODE ----
 
   function tryUnlockGuardMode() {
-
     const entered = pinInput.value.trim();
-
     if (!entered) {
-
       pinError.textContent = "PIN is required.";
-
       pinError.style.display = "block";
-
       return;
-
     }
-
- 
-
     if (entered !== GUARD_PIN) {
-
       pinError.textContent = "Incorrect PIN.";
-
       pinError.style.display = "block";
-
       return;
-
     }
-
- 
 
     pinError.style.display = "none";
-
     pinInput.value = "";
-
     guardActive = true;
-
     guardLockedState.style.display = "none";
-
     guardUnlockedState.style.display = "block";
 
+    rainModeBtn.style.display = "inline-flex";
+    rainModeGuardBtn.style.display = "inline-flex";
+
     updateBusButtonStates();
-
   }
-
- 
 
   function lockGuardMode() {
-
     guardActive = false;
-
     guardLockedState.style.display = "block";
-
     guardUnlockedState.style.display = "none";
-
+    rainModeBtn.style.display = "none";
+    rainModeGuardBtn.style.display = "none";
     updateBusButtonStates();
-
   }
-
- 
-
-  // ---- ORDER RECORDING ----
 
   function handleBusClick(index) {
-
-    if (!guardActive) return;
-
+    if (!guardActive || rainMode) return;
     if (currentOrder.includes(index)) return;
-
     if (currentOrder.length >= MAX_BUSES) return;
-
- 
-
     currentOrder.push(index);
-
     updateBusButtonStates();
-
     updateRecordStatus();
-
     updatePublishButtonState();
-
   }
-
- 
 
   function updateBusButtonStates() {
-
     const buttons = busGrid.querySelectorAll(".bus-btn");
-
     buttons.forEach((btn) => {
-
       const index = parseInt(btn.dataset.index || "0", 10);
-
       const orderTag = btn.querySelector(".bus-order-tag");
-
       const position = currentOrder.indexOf(index);
 
- 
-
-      if (guardActive) {
-
-        btn.classList.add("guard-active");
-
-        btn.disabled = false;
-
-      } else {
-
-        btn.classList.remove("guard-active");
-
-        btn.disabled = true;
-
-      }
-
- 
-
-      if (position >= 0) {
-
-        orderTag.textContent = `#${position + 1}`;
-
-      } else {
-
-        orderTag.textContent = "";
-
-      }
-
+      btn.disabled = !(guardActive && !rainMode);
+      btn.classList.toggle("guard-active", guardActive && !rainMode);
+      orderTag.textContent = position >= 0 ? `#${position + 1}` : "";
     });
-
   }
-
- 
 
   function updateRecordStatus() {
-
     recordStatus.innerHTML = `<strong>Recorded:</strong> ${currentOrder.length} / ${MAX_BUSES} buses`;
-
   }
-
- 
 
   function updatePublishButtonState() {
-
-    publishBtn.disabled = currentOrder.length === 0;
-
+    publishBtn.disabled = currentOrder.length === 0 || rainMode;
   }
 
- 
-
-  // ---- CLEAR TODAY (recording + published) ----
-
-  function clearToday() {
-
+  async function clearToday() {
     if (!guardActive) return;
-
- 
-
-    // Clear current recording
-
     currentOrder = [];
-
     updateBusButtonStates();
-
     updateRecordStatus();
-
     updatePublishButtonState();
-
- 
-
-    // Clear published order from Firestore (UI updates via onSnapshot)
-
-    deleteDoc(busDocRef).catch((err) => {
-
-      console.error("Failed to clear published order:", err);
-
-    });
-
+    try { await deleteDoc(busDocRef); } catch (err) { console.error(err); }
+    try { await deleteDoc(rainDocRef); } catch (err) { console.error(err); }
+    setLocalRainMode(false);
   }
 
- 
-
-  // ---- PUBLISHING (FIREBASE FIRESTORE) ----
-
-  function publishOrder() {
-
-    if (!guardActive || currentOrder.length === 0) return;
-
- 
-
+  async function publishOrder() {
+    if (!guardActive || currentOrder.length === 0 || rainMode) return;
     const payload = currentOrder.slice();
-
-    setDoc(busDocRef, {
-
-      order: payload,
-
-      timestamp: serverTimestamp()
-
-    }).catch((err) => {
-
+    try {
+      await setDoc(busDocRef, { order: payload, timestamp: serverTimestamp() });
+    } catch (err) {
       console.error("Failed to publish order:", err);
-
-    });
-
+    }
   }
-
- 
 
   function subscribeToPublishedOrder() {
-
     onSnapshot(
-
       busDocRef,
-
       (snapshot) => {
-
-        if (!snapshot.exists()) {
-
+        if (!snapshot.exists() || rainMode) {
           clearPublishedDisplay();
-
           return;
-
         }
-
- 
-
         const data = snapshot.data();
-
         const indices = data.order;
-
         const ts = data.timestamp;
-
- 
-
-        if (!indices || indices.length === 0 || !ts) {
-
+        if (!indices || indices.length === 0 || !ts || rainMode) {
           clearPublishedDisplay();
-
           return;
-
         }
-
- 
-
         const dt = ts.toDate ? ts.toDate() : new Date(ts);
-
         renderPublishedOrder(indices, dt);
-
       },
-
-      (err) => {
-
-        console.error("Failed to subscribe to published order:", err);
-
-      }
-
+      (err) => console.error("Failed to subscribe to published order:", err)
     );
-
   }
-
- 
 
   function renderPublishedOrder(indices, dt) {
-
-    publishedList.innerHTML = "";
-
-    if (!indices || indices.length === 0) {
-
+    if (rainMode) {
       clearPublishedDisplay();
-
       return;
-
     }
 
- 
-
+    publishedList.innerHTML = "";
     indices.forEach((idx, i) => {
-
       const li = document.createElement("li");
-
       const badge = document.createElement("span");
-
       badge.className = "badge-index";
-
       badge.textContent = (i + 1).toString();
-
- 
-
       const label = document.createElement("span");
-
       label.textContent = BUS_LIST[idx] || `Bus ${idx + 1}`;
-
- 
-
       li.appendChild(badge);
-
       li.appendChild(label);
-
       publishedList.appendChild(li);
-
     });
 
- 
-
-    publicMessage.textContent = "Latest published order:";
+    publicMessage.textContent = ""; // no extra label
+    publishedNote.style.display = "block"; // show note when order exists
 
     publishedTimestamp.textContent =
-
       "Published at: " +
-
       dt.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
-
   }
-
- 
 
   function clearPublishedDisplay() {
-
-    publicMessage.textContent = "No order published yet today.";
-
     publishedList.innerHTML = "";
-
     publishedTimestamp.textContent = "";
 
+    if (rainMode) {
+      publicMessage.textContent = "No order published today due to rain";
+    } else {
+      publicMessage.textContent = "No order published yet today.";
+    }
+
+    publishedNote.style.display = rainMode ? "none" : "none";
   }
 
- 
+  async function setRainMode(active) {
+    if (!guardActive && active) return;
+    setLocalRainMode(active);
+
+    if (active) {
+      currentOrder = [];
+      updateBusButtonStates();
+      updateRecordStatus();
+      updatePublishButtonState();
+      try { await deleteDoc(busDocRef); } catch (err) { console.error(err); }
+      try {
+        await setDoc(rainDocRef, { rain: true, timestamp: serverTimestamp() });
+      } catch (err) { console.error(err); }
+    } else {
+      try { await deleteDoc(rainDocRef); } catch (err) { console.error(err); }
+    }
+  }
+
+  function setLocalRainMode(active) {
+    rainMode = active;
+    updateBusButtonStates();
+    updatePublishButtonState();
+    clearPublishedDisplay();
+    if (rainMode) startRain();
+    else stopRain();
+  }
+
+  let rainInterval = null;
+  let headerRainInterval = null;
+
+  function startRain() {
+    if (rainInterval) return;
+    const createDrop = () => {
+      const drop = document.createElement("div");
+      drop.className = "raindrop";
+      const startX = Math.random() * window.innerWidth;
+      const duration = 1.5 + Math.random() * 1.5;
+      drop.style.left = startX + "px";
+      drop.style.top = "-20px";
+      drop.style.animationDuration = duration + "s";
+      rainContainer.appendChild(drop);
+      setTimeout(() => drop.parentNode && drop.parentNode.removeChild(drop), duration * 1000);
+    };
+    rainInterval = setInterval(createDrop, 100);
+    startHeaderRain();
+  }
+
+  function stopRain() {
+    if (rainInterval) {
+      clearInterval(rainInterval);
+      rainInterval = null;
+    }
+    while (rainContainer.firstChild) rainContainer.removeChild(rainContainer.firstChild);
+    stopHeaderRain();
+  }
+
+  function startHeaderRain() {
+    if (headerRainInterval) return;
+    const createHeaderDrop = () => {
+      const drop = document.createElement("div");
+      drop.className = "header-raindrop";
+      const width = headerRain.offsetWidth || window.innerWidth;
+      const startX = Math.random() * width;
+      const duration = 1 + Math.random() * 1.5;
+      drop.style.left = startX + "px";
+      drop.style.top = "-20px";
+      drop.style.animationDuration = duration + "s";
+      headerRain.appendChild(drop);
+      setTimeout(() => drop.parentNode && drop.parentNode.removeChild(drop), duration * 1000);
+    };
+    headerRainInterval = setInterval(createHeaderDrop, 120);
+  }
+
+  function stopHeaderRain() {
+    if (headerRainInterval) {
+      clearInterval(headerRainInterval);
+      headerRainInterval = null;
+    }
+    while (headerRain.firstChild) headerRain.removeChild(headerRain.firstChild);
+  }
 
   init();
-
 </script>
 
 </body>
-
 </html>
