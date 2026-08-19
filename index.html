@@ -42,9 +42,7 @@
       z-index: 2;
     }
 
-    header p {
-      display: none;
-    }
+    header p { display: none; }
 
     .header-rain {
       position: absolute;
@@ -65,14 +63,8 @@
     }
 
     @keyframes header-fall {
-      from {
-        transform: translateY(-20px);
-        opacity: 0.9;
-      }
-      to {
-        transform: translateY(80px);
-        opacity: 0.9;
-      }
+      from { transform: translateY(-20px); opacity: 0.9; }
+      to   { transform: translateY(80px);  opacity: 0.9; }
     }
 
     main {
@@ -87,9 +79,7 @@
     }
 
     @media (max-width: 768px) {
-      main {
-        grid-template-columns: 1fr;
-      }
+      main { grid-template-columns: 1fr; }
     }
 
     .card {
@@ -119,8 +109,6 @@
       gap: 8px;
       margin-bottom: 10px;
     }
-
-    .badge { display: none; }
 
     .bus-grid {
       display: grid;
@@ -159,11 +147,6 @@
       font-size: 0.75rem;
       color: var(--muted);
       margin-left: 6px;
-    }
-
-    .bus-order-tag span {
-      font-weight: 600;
-      color: var(--primary-dark);
     }
 
     .muted {
@@ -315,14 +298,8 @@
     }
 
     @keyframes fall {
-      from {
-        transform: translateY(-20px);
-        opacity: 0.9;
-      }
-      to {
-        transform: translateY(100vh);
-        opacity: 0.9;
-      }
+      from { transform: translateY(-20px); opacity: 0.9; }
+      to   { transform: translateY(100vh);  opacity: 0.9; }
     }
 
     #publishedBody {
@@ -336,7 +313,7 @@
     #publicMessage {
       text-align: center;
       font-size: 1.2rem;
-      font-weight: 700;
+      font-weight: 600;
       color: var(--muted);
       margin: 4px 0;
     }
@@ -371,6 +348,7 @@
       <div class="flex-row">
         <input type="password" id="pinInput" placeholder="Enter PIN" />
         <button class="btn btn-primary" id="unlockBtn">Unlock</button>
+        <!-- hidden until guard unlocks -->
         <button class="btn btn-outline" id="rainModeBtn" style="display:none;">Rain mode</button>
       </div>
       <div class="alert" id="pinError" style="display:none;">Incorrect PIN.</div>
@@ -391,6 +369,7 @@
         <button class="btn btn-primary" id="publishBtn" disabled>Publish order</button>
         <button class="btn btn-outline" id="clearBtn">Clear today</button>
         <button class="btn btn-danger" id="lockBtn">Lock Guard Mode</button>
+        <!-- also appears after unlock -->
         <button class="btn btn-outline" id="rainModeGuardBtn" style="display:none;">Rain mode</button>
       </div>
 
@@ -444,7 +423,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const busDocRef = doc(db, "busData", "today");
-  const rainDocRef = doc(db, "busData", "rain");
+  const rainDocRef = doc(db, "busData", "rain"); // shared rain state
 
   const BUS_LIST = [
     "Chinese Garden MRT",
@@ -491,6 +470,7 @@
   function init() {
     renderBusButtons();
     subscribeToPublishedOrder();
+    subscribeToRainMode();     // NEW: listen to rain state from Firestore
     attachEvents();
   }
 
@@ -504,6 +484,7 @@
       if (e.key === "Enter") tryUnlockGuardMode();
     });
 
+    // Guard controls rain mode (writes to Firestore)
     rainModeBtn.addEventListener("click", () => {
       if (guardActive) setRainMode(true);
     });
@@ -663,9 +644,8 @@
       publishedList.appendChild(li);
     });
 
-    publicMessage.textContent = ""; // no extra label
-    publishedNote.style.display = "block"; // show note when order exists
-
+    publicMessage.textContent = "";              // no “latest published order”
+    publishedNote.style.display = "block";       // show note with order
     publishedTimestamp.textContent =
       "Published at: " +
       dt.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -680,26 +660,38 @@
     } else {
       publicMessage.textContent = "No order published yet today.";
     }
-
-    publishedNote.style.display = rainMode ? "none" : "none";
+    publishedNote.style.display = "none";
   }
+
+  // --- Rain mode: guard writes to Firestore; all devices read/subscribe ---
 
   async function setRainMode(active) {
     if (!guardActive && active) return;
-    setLocalRainMode(active);
 
     if (active) {
-      currentOrder = [];
-      updateBusButtonStates();
-      updateRecordStatus();
-      updatePublishButtonState();
+      // write shared rain state
+      await setDoc(rainDocRef, { rain: true, timestamp: serverTimestamp() });
+      // clear today's order from Firestore
       try { await deleteDoc(busDocRef); } catch (err) { console.error(err); }
-      try {
-        await setDoc(rainDocRef, { rain: true, timestamp: serverTimestamp() });
-      } catch (err) { console.error(err); }
     } else {
       try { await deleteDoc(rainDocRef); } catch (err) { console.error(err); }
     }
+    // local UI will update via subscribeToRainMode
+  }
+
+  function subscribeToRainMode() {
+    onSnapshot(
+      rainDocRef,
+      (snapshot) => {
+        if (snapshot.exists()) {
+          // ANY device that sees rainDocRef gets rainMode on
+          setLocalRainMode(true);
+        } else {
+          setLocalRainMode(false);
+        }
+      },
+      (err) => console.error("Failed to subscribe to rain mode:", err)
+    );
   }
 
   function setLocalRainMode(active) {
@@ -710,6 +702,8 @@
     if (rainMode) startRain();
     else stopRain();
   }
+
+  // --- Rain animation ---
 
   let rainInterval = null;
   let headerRainInterval = null;
