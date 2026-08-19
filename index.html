@@ -23,7 +23,6 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
-      /* allow scrolling on phone & laptop */
       overflow-x: hidden;
       overflow-y: auto;
       min-height: 100vh;
@@ -36,6 +35,7 @@
       text-align: center;
       position: relative;
       overflow: hidden;
+      z-index: 1; /* ensure above rain */
     }
 
     header h1 {
@@ -84,7 +84,7 @@
       grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
       gap: 24px;
       position: relative;
-      z-index: 1;
+      z-index: 1; /* ensure above rain */
     }
 
     @media (max-width: 768px) {
@@ -293,7 +293,7 @@
       position: fixed;
       inset: 0;
       overflow: hidden;
-      z-index: 999;
+      z-index: 0; /* lowered so content is above rain */
     }
 
     .raindrop {
@@ -353,7 +353,6 @@
     <div class="section-header">
       <div>
         <h2>Guard Mode</h2>
-        <!-- Sub-title simplified as requested -->
         <p class="card-subtitle">Only the security guard can record arrivals.</p>
       </div>
     </div>
@@ -602,7 +601,6 @@
     updatePublishButtonState();
     try { await deleteDoc(busDocRef); } catch (err) { console.error(err); }
     try { await deleteDoc(rainDocRef); } catch (err) { console.error(err); }
-    // After CLEAR, remove local rain mode and revert message to "No order published yet today."
     setLocalRainMode(false);
   }
 
@@ -631,8 +629,7 @@
           clearPublishedDisplay();
           return;
         }
-        const dt = ts.toDate ? ts.toDate() : new Date(ts);
-        renderPublishedOrder(indices, dt);
+        renderPublishedOrder(indices, ts.toDate());
       },
       (err) => console.error("Failed to subscribe to published order:", err)
     );
@@ -640,7 +637,6 @@
 
   function renderPublishedOrder(indices, dt) {
     if (rainMode) {
-      // When rain mode is active, keep the rain message, do not show list.
       clearPublishedDisplay();
       return;
     }
@@ -671,7 +667,6 @@
     publishedTimestamp.textContent = "";
 
     if (rainMode) {
-      // MOST IMPORTANT: show and keep this message whenever rain mode is active
       publicMessage.textContent = "No order published today due to rain";
     } else {
       publicMessage.textContent = "No order published yet today.";
