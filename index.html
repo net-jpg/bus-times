@@ -44,27 +44,33 @@
 
     header p { display: none; }
 
+    /* HEADER RAIN – subtle light-blue droplet streaks */
     .header-rain {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       pointer-events: none;
       z-index: 1;
+      overflow: hidden;
     }
 
     .header-raindrop {
       position: absolute;
-      width: 2px;
-      height: 18px;
-      background: rgba(0, 0, 255, 0.35);
-      animation: header-fall linear;
+      width: 3px;
+      height: 20px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(240, 248, 255, 0.95) 0%, rgba(173,216,230,0.65) 40%, rgba(173,216,230,0.0) 80%);
+      border-radius: 999px;
+      box-shadow:
+        0 7px 12px rgba(0,0,0,0.10),
+        0 -2px 4px rgba(255,255,255,0.6);
+      opacity: 0.95;
+      transform-origin: center top;
+      animation: header-fall 1.7s linear forwards;
     }
 
     @keyframes header-fall {
-      from { transform: translateY(-20px); opacity: 0.9; }
-      to   { transform: translateY(80px);  opacity: 0.9; }
+      from { transform: translateY(-40px); opacity: 0; }
+      to   { transform: translateY(90px);  opacity: 0.95; }
     }
 
     main {
@@ -278,28 +284,33 @@
       margin-top: 4px;
     }
 
+    /* FULL-SCREEN RAIN – light blue droplets */
     .rain-container {
       pointer-events: none;
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
+      inset: 0;
       overflow: hidden;
       z-index: 999;
     }
 
     .raindrop {
       position: absolute;
-      width: 2px;
-      height: 14px;
-      background: rgba(0, 0, 255, 0.4);
-      animation: fall linear;
+      width: 4px;
+      height: 26px;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(240, 248, 255, 0.95) 0%, rgba(135,206,250,0.7) 40%, rgba(135,206,250,0.0) 80%);
+      border-radius: 999px;
+      box-shadow:
+        0 8px 14px rgba(0,0,0,0.10),
+        0 -2px 4px rgba(255,255,255,0.7);
+      opacity: 0.95;
+      transform-origin: center top;
+      animation: fall 1.9s linear forwards;
     }
 
     @keyframes fall {
-      from { transform: translateY(-20px); opacity: 0.9; }
-      to   { transform: translateY(100vh);  opacity: 0.9; }
+      from { transform: translateY(-60px); opacity: 0; }
+      to   { transform: translateY(110vh); opacity: 0.95; }
     }
 
     #publishedBody {
@@ -348,7 +359,6 @@
       <div class="flex-row">
         <input type="password" id="pinInput" placeholder="Enter PIN" />
         <button class="btn btn-primary" id="unlockBtn">Unlock</button>
-        <!-- hidden until guard unlocks -->
         <button class="btn btn-outline" id="rainModeBtn" style="display:none;">Rain mode</button>
       </div>
       <div class="alert" id="pinError" style="display:none;">Incorrect PIN.</div>
@@ -369,7 +379,6 @@
         <button class="btn btn-primary" id="publishBtn" disabled>Publish order</button>
         <button class="btn btn-outline" id="clearBtn">Clear today</button>
         <button class="btn btn-danger" id="lockBtn">Lock Guard Mode</button>
-        <!-- also appears after unlock -->
         <button class="btn btn-outline" id="rainModeGuardBtn" style="display:none;">Rain mode</button>
       </div>
 
@@ -423,7 +432,7 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
   const busDocRef = doc(db, "busData", "today");
-  const rainDocRef = doc(db, "busData", "rain"); // shared rain state
+  const rainDocRef = doc(db, "busData", "rain");
 
   const BUS_LIST = [
     "Chinese Garden MRT",
@@ -470,7 +479,7 @@
   function init() {
     renderBusButtons();
     subscribeToPublishedOrder();
-    subscribeToRainMode();     // NEW: listen to rain state from Firestore
+    subscribeToRainMode();
     attachEvents();
   }
 
@@ -484,7 +493,6 @@
       if (e.key === "Enter") tryUnlockGuardMode();
     });
 
-    // Guard controls rain mode (writes to Firestore)
     rainModeBtn.addEventListener("click", () => {
       if (guardActive) setRainMode(true);
     });
@@ -644,8 +652,9 @@
       publishedList.appendChild(li);
     });
 
-    publicMessage.textContent = "";              // no “latest published order”
-    publishedNote.style.display = "block";       // show note with order
+    publicMessage.textContent = "";
+    publishedNote.style.display = "block";
+
     publishedTimestamp.textContent =
       "Published at: " +
       dt.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
@@ -660,23 +669,19 @@
     } else {
       publicMessage.textContent = "No order published yet today.";
     }
+
     publishedNote.style.display = "none";
   }
-
-  // --- Rain mode: guard writes to Firestore; all devices read/subscribe ---
 
   async function setRainMode(active) {
     if (!guardActive && active) return;
 
     if (active) {
-      // write shared rain state
       await setDoc(rainDocRef, { rain: true, timestamp: serverTimestamp() });
-      // clear today's order from Firestore
       try { await deleteDoc(busDocRef); } catch (err) { console.error(err); }
     } else {
       try { await deleteDoc(rainDocRef); } catch (err) { console.error(err); }
     }
-    // local UI will update via subscribeToRainMode
   }
 
   function subscribeToRainMode() {
@@ -684,7 +689,6 @@
       rainDocRef,
       (snapshot) => {
         if (snapshot.exists()) {
-          // ANY device that sees rainDocRef gets rainMode on
           setLocalRainMode(true);
         } else {
           setLocalRainMode(false);
@@ -703,25 +707,33 @@
     else stopRain();
   }
 
-  // --- Rain animation ---
+  // --- Light-blue droplet rain animation ---
 
   let rainInterval = null;
   let headerRainInterval = null;
 
   function startRain() {
     if (rainInterval) return;
+
     const createDrop = () => {
       const drop = document.createElement("div");
       drop.className = "raindrop";
+
       const startX = Math.random() * window.innerWidth;
-      const duration = 1.5 + Math.random() * 1.5;
-      drop.style.left = startX + "px";
-      drop.style.top = "-20px";
-      drop.style.animationDuration = duration + "s";
+      const duration = 1.5 + Math.random() * 1.0;
+
+      drop.style.left = `${startX}px`;
+      drop.style.top = "-60px";
+      drop.style.animationDuration = `${duration}s`;
+
       rainContainer.appendChild(drop);
-      setTimeout(() => drop.parentNode && drop.parentNode.removeChild(drop), duration * 1000);
+
+      setTimeout(() => {
+        if (drop.parentNode) drop.parentNode.removeChild(drop);
+      }, duration * 1000);
     };
-    rainInterval = setInterval(createDrop, 100);
+
+    rainInterval = setInterval(createDrop, 85);
     startHeaderRain();
   }
 
@@ -730,24 +742,34 @@
       clearInterval(rainInterval);
       rainInterval = null;
     }
-    while (rainContainer.firstChild) rainContainer.removeChild(rainContainer.firstChild);
+    while (rainContainer.firstChild) {
+      rainContainer.removeChild(rainContainer.firstChild);
+    }
     stopHeaderRain();
   }
 
   function startHeaderRain() {
     if (headerRainInterval) return;
+
     const createHeaderDrop = () => {
       const drop = document.createElement("div");
       drop.className = "header-raindrop";
+
       const width = headerRain.offsetWidth || window.innerWidth;
       const startX = Math.random() * width;
-      const duration = 1 + Math.random() * 1.5;
-      drop.style.left = startX + "px";
-      drop.style.top = "-20px";
-      drop.style.animationDuration = duration + "s";
+      const duration = 1.2 + Math.random() * 0.6;
+
+      drop.style.left = `${startX}px`;
+      drop.style.top = "-40px";
+      drop.style.animationDuration = `${duration}s`;
+
       headerRain.appendChild(drop);
-      setTimeout(() => drop.parentNode && drop.parentNode.removeChild(drop), duration * 1000);
+
+      setTimeout(() => {
+        if (drop.parentNode) drop.parentNode.removeChild(drop);
+      }, duration * 1000);
     };
+
     headerRainInterval = setInterval(createHeaderDrop, 120);
   }
 
@@ -756,7 +778,9 @@
       clearInterval(headerRainInterval);
       headerRainInterval = null;
     }
-    while (headerRain.firstChild) headerRain.removeChild(headerRain.firstChild);
+    while (headerRain.firstChild) {
+      headerRain.removeChild(headerRain.firstChild);
+    }
   }
 
   init();
