@@ -35,7 +35,7 @@
       text-align: center;
       position: relative;
       overflow: hidden;
-      z-index: 1; /* ensure above rain */
+      z-index: 1;
     }
 
     header h1 {
@@ -51,7 +51,7 @@
     .header-rain {
       position: absolute;
       inset: 0;
-      pointer-events: none;
+      pointer-events: none; /* ensure header rain never intercepts input */
       z-index: 1;
       overflow: hidden;
     }
@@ -84,7 +84,7 @@
       grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr);
       gap: 24px;
       position: relative;
-      z-index: 1; /* ensure above rain */
+      z-index: 2;
     }
 
     @media (max-width: 768px) {
@@ -289,11 +289,11 @@
 
     /* FULL-SCREEN RAIN – light blue droplets */
     .rain-container {
-      pointer-events: none;
+      pointer-events: none; /* critical: rain never blocks scroll/touch */
       position: fixed;
       inset: 0;
       overflow: hidden;
-      z-index: 0; /* lowered so content is above rain */
+      z-index: 999; /* keep rain on top */
     }
 
     .raindrop {
