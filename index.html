@@ -23,7 +23,10 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: var(--bg);
       color: var(--text);
-      overflow: hidden;
+      /* allow scrolling on phone & laptop */
+      overflow-x: hidden;
+      overflow-y: auto;
+      min-height: 100vh;
     }
 
     header {
@@ -350,7 +353,8 @@
     <div class="section-header">
       <div>
         <h2>Guard Mode</h2>
-        <p class="card-subtitle">PIN-protected. Only the security guard can record arrivals.</p>
+        <!-- Sub-title simplified as requested -->
+        <p class="card-subtitle">Only the security guard can record arrivals.</p>
       </div>
     </div>
 
@@ -421,7 +425,7 @@
   } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
   const firebaseConfig = {
-    apiKey: "AIzaSyDjyPsJbVDKoKlCMydaJTOMIAzqyH4jhdw",
+    apiKey: "AIzaSyDjyPsJbVDKoKlCMydaJTOMIAzqyH4jhdw",   // unsafe: hardcoded key in client
     authDomain: "bus-times-80549.firebaseapp.com",
     projectId: "bus-times-80549",
     storageBucket: "bus-times-80549.firebasestorage.app",
@@ -598,6 +602,7 @@
     updatePublishButtonState();
     try { await deleteDoc(busDocRef); } catch (err) { console.error(err); }
     try { await deleteDoc(rainDocRef); } catch (err) { console.error(err); }
+    // After CLEAR, remove local rain mode and revert message to "No order published yet today."
     setLocalRainMode(false);
   }
 
@@ -635,6 +640,7 @@
 
   function renderPublishedOrder(indices, dt) {
     if (rainMode) {
+      // When rain mode is active, keep the rain message, do not show list.
       clearPublishedDisplay();
       return;
     }
@@ -665,12 +671,13 @@
     publishedTimestamp.textContent = "";
 
     if (rainMode) {
+      // MOST IMPORTANT: show and keep this message whenever rain mode is active
       publicMessage.textContent = "No order published today due to rain";
     } else {
       publicMessage.textContent = "No order published yet today.";
     }
 
-    publishedNote.style.display = "none";
+    publishedNote.style.display = rainMode ? "none" : "none";
   }
 
   async function setRainMode(active) {
